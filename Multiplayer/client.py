@@ -1,4 +1,6 @@
-
+import socket
+import threading
+import pickle
 from ursina import *
 from ursina.prefabs.first_person_controller import FirstPersonController
 
@@ -7,8 +9,7 @@ app = Ursina()
 class Voxel(Button):
     def __init__(self, position=(0,0,0), 
                  texture='grass',
-                 default_color=color.green,
-                 ):
+                 default_color=color.green):
         super().__init__(parent=scene,
             position=position,
             model='cube',
@@ -18,9 +19,25 @@ class Voxel(Button):
             color=default_color,
         )
 
-for z in range(10):
-    for x in range(10):
-        voxel = Voxel(position=(x,0,z))
+def update_positions():
+    global player
+    player_data = {
+        'x': player.x,
+        'y': player.y,
+        'z': player.z
+    }
+    data = pickle.dumps(player_data)
+    client.send(data)
+
+def receive_positions():
+    while True:
+        try:
+            data = client.recv(4096)
+            if data:
+                player_data = pickle.loads(data)
+                # Update other players' positions here
+        except:
+            break
 
 def input(key):
     global player
@@ -44,12 +61,26 @@ def input(key):
     if key == 'escape':
         exit()
 
-window.fullscreen = True
-player = FirstPersonController(gravity = 0.5)
+# Set up client socket
+CLIENT_IP = '127.0.0.1'
+CLIENT_PORT = 5555
+
+client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+client.connect((CLIENT_IP, CLIENT_PORT))
+
+player = FirstPersonController(gravity=0.5)
 
 def update():
     if player.y < -5:
-        player.y = 50 
+        player.y = 50
+
+    # Send player position to server
+    update_positions()
+
+    # For demonstration, you may want to update other players' positions here
+
+# Start thread for receiving positions
+threading.Thread(target=receive_positions, daemon=True).start()
 
 Sky()
 app.run()
