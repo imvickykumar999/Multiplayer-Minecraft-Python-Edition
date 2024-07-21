@@ -62,11 +62,11 @@ def input(key):
         exit()
 
 # Set up client socket
-CLIENT_IP = '127.0.0.1'
+PUBLIC_IP = '192.168.0.106'  # Replace with your public IP
 CLIENT_PORT = 5555
 
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-client.connect((CLIENT_IP, CLIENT_PORT))
+client.connect((PUBLIC_IP, CLIENT_PORT))
 
 player = FirstPersonController(gravity=0.5)
 

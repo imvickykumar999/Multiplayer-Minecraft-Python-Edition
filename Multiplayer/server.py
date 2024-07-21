@@ -3,7 +3,7 @@ import threading
 import pickle  # For serializing player data
 
 # Define server address and port
-SERVER_IP = '127.0.0.1'
+SERVER_IP = '0.0.0.0'
 SERVER_PORT = 5555
 
 # Initialize server
