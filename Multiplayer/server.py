@@ -29,13 +29,14 @@ def broadcast(message):
 
 def handle_client(client):
     # Send initial world state to new client
-    client.send(pickle.dumps(world_state))
+    client.send(pickle.dumps({'type': 'world_state', 'data': world_state}))
     
     while True:
         try:
             data = client.recv(4096)
             if not data:
                 break
+            # Broadcast received data to all other clients
             broadcast(data)
         except:
             break

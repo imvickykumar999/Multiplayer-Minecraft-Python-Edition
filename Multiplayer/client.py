@@ -19,15 +19,21 @@ class Voxel(Button):
             color=default_color,
         )
 
+def send_data(message):
+    data = pickle.dumps(message)
+    client.send(data)
+
 def update_positions():
     global player
     player_data = {
-        'x': player.x,
-        'y': player.y,
-        'z': player.z
+        'type': 'player_position',
+        'data': {
+            'x': player.x,
+            'y': player.y,
+            'z': player.z
+        }
     }
-    data = pickle.dumps(player_data)
-    client.send(data)
+    send_data(player_data)
 
 def receive_data():
     while True:
@@ -36,21 +42,34 @@ def receive_data():
             if data:
                 received_data = pickle.loads(data)
                 
-                # Check if it's world state or player data
-                if isinstance(received_data, list):  # World state
+                if received_data['type'] == 'world_state':  # World state
                     # Clear existing voxels
                     for entity in scene.entities:
                         if isinstance(entity, Voxel):
                             destroy(entity)
                     
                     # Create voxels based on received data
-                    for voxel_data in received_data:
+                    for voxel_data in received_data['data']:
                         Voxel(position=voxel_data['position'],
                               texture=voxel_data['texture'],
                               default_color=eval(f'color.{voxel_data["color"]}'))
-                else:  # Player data
-                    # Update other players' positions here
-                    pass
+                
+                elif received_data['type'] == 'block_update':  # Block placement/removal
+                    action = received_data['action']
+                    voxel_data = received_data['data']
+                    
+                    if action == 'add':
+                        Voxel(position=voxel_data['position'],
+                              texture=voxel_data['texture'],
+                              default_color=eval(f'color.{voxel_data["color"]}'))
+                    elif action == 'remove':
+                        for entity in scene.entities:
+                            if isinstance(entity, Voxel) and entity.position == voxel_data['position']:
+                                destroy(entity)
+                
+                elif received_data['type'] == 'player_position':  # Update other players' positions
+                    pass  # Handle other players' positions here
+                
         except:
             break
 
@@ -65,12 +84,26 @@ def input(key):
 
     if key == 'left mouse down':
         if hit_info.hit:
-            Voxel(position=hit_info.entity.position + hit_info.normal, 
-                  texture='brick',
-                  default_color=color.orange,
-                )
+            block_data = {
+                'type': 'block_update',
+                'action': 'add',
+                'data': {
+                    'position': hit_info.entity.position + hit_info.normal,
+                    'texture': 'brick',
+                    'color': 'orange'
+                }
+            }
+            send_data(block_data)
             
     if key == 'right mouse down' and mouse.hovered_entity:
+        block_data = {
+            'type': 'block_update',
+            'action': 'remove',
+            'data': {
+                'position': mouse.hovered_entity.position
+            }
+        }
+        send_data(block_data)
         destroy(mouse.hovered_entity)
 
     if key == 'escape':
