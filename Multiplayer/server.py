@@ -38,11 +38,15 @@ def handle_client(client):
                 break
             # Broadcast received data to all other clients
             broadcast(data)
-        except:
+        except (ConnectionResetError, ConnectionAbortedError):
+            break
+        except Exception as e:
+            print(f"Error: {e}")
             break
 
+    if client in clients:
+        clients.remove(client)
     client.close()
-    clients.remove(client)
 
 def main():
     print(f"Server started on {SERVER_IP}:{SERVER_PORT}")
