@@ -29,13 +29,14 @@ def update_positions():
     data = pickle.dumps(player_data)
     client.send(data)
 
-def receive_positions():
+def receive_data():
     while True:
         try:
             data = client.recv(4096)
             if data:
+                # Deserialize data and update game state
                 player_data = pickle.loads(data)
-                # Update other players' positions here
+                # Update other players' positions or game world state here
         except:
             break
 
@@ -77,10 +78,10 @@ def update():
     # Send player position to server
     update_positions()
 
-    # For demonstration, you may want to update other players' positions here
+    # For demonstration, you may want to update other players' positions or world state here
 
-# Start thread for receiving positions
-threading.Thread(target=receive_positions, daemon=True).start()
+# Start thread for receiving data
+threading.Thread(target=receive_data, daemon=True).start()
 
 Sky()
 app.run()

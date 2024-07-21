@@ -12,6 +12,7 @@ server.bind((SERVER_IP, SERVER_PORT))
 server.listen()
 
 clients = []
+world_state = []
 
 def broadcast(message):
     for client in clients:
@@ -23,7 +24,6 @@ def broadcast(message):
 def handle_client(client):
     while True:
         try:
-            # Receive player data from client
             data = client.recv(4096)
             if not data:
                 break
