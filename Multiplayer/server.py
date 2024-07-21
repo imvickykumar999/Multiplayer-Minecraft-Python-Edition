@@ -20,12 +20,17 @@ for z in range(10):
         voxel_data = {'position': (x, 0, z), 'texture': 'grass', 'color': 'green'}
         world_state.append(voxel_data)
 
+# Lock to manage access to the clients list
+clients_lock = threading.Lock()
+
 def broadcast(message):
-    for client in clients:
-        try:
-            client.send(message)
-        except:
-            clients.remove(client)
+    with clients_lock:
+        for client in clients:
+            try:
+                client.send(message)
+            except:
+                # If sending fails, remove the client
+                clients.remove(client)
 
 def handle_client(client):
     # Send initial world state to new client
@@ -44,8 +49,10 @@ def handle_client(client):
             print(f"Error: {e}")
             break
 
-    if client in clients:
-        clients.remove(client)
+    # Remove client from the list safely
+    with clients_lock:
+        if client in clients:
+            clients.remove(client)
     client.close()
 
 def main():
@@ -53,7 +60,8 @@ def main():
     while True:
         client, addr = server.accept()
         print(f"Connection from {addr}")
-        clients.append(client)
+        with clients_lock:
+            clients.append(client)
         threading.Thread(target=handle_client, args=(client,)).start()
 
 if __name__ == "__main__":
