@@ -18,22 +18,11 @@ class Voxel(Button):
             highlight_color=color.red,
             color=default_color,
         )
+        self.disabled = False  # Initialize 'disabled' attribute
 
 def send_data(message):
     data = pickle.dumps(message)
     client.send(data)
-
-def update_positions():
-    global player
-    player_data = {
-        'type': 'player_position',
-        'data': {
-            'x': player.x,
-            'y': player.y,
-            'z': player.z
-        }
-    }
-    send_data(player_data)
 
 def receive_data():
     while True:
@@ -123,9 +112,15 @@ def update():
         player.y = 50
 
     # Send player position to server
-    update_positions()
-
-    # For demonstration, you may want to update other players' positions here
+    player_data = {
+        'type': 'player_position',
+        'data': {
+            'x': player.x,
+            'y': player.y,
+            'z': player.z
+        }
+    }
+    send_data(player_data)
 
 # Start thread for receiving data
 threading.Thread(target=receive_data, daemon=True).start()
