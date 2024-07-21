@@ -1,6 +1,6 @@
 import socket
 import threading
-import pickle  # For serializing player data
+import pickle
 
 # Define server address and port
 SERVER_IP = '0.0.0.0'
@@ -14,6 +14,12 @@ server.listen()
 clients = []
 world_state = []
 
+# Create initial world state
+for z in range(10):
+    for x in range(10):
+        voxel_data = {'position': (x, 0, z), 'texture': 'grass', 'color': 'green'}
+        world_state.append(voxel_data)
+
 def broadcast(message):
     for client in clients:
         try:
@@ -22,12 +28,14 @@ def broadcast(message):
             clients.remove(client)
 
 def handle_client(client):
+    # Send initial world state to new client
+    client.send(pickle.dumps(world_state))
+    
     while True:
         try:
             data = client.recv(4096)
             if not data:
                 break
-            # Broadcast received data to all other clients
             broadcast(data)
         except:
             break

@@ -34,9 +34,23 @@ def receive_data():
         try:
             data = client.recv(4096)
             if data:
-                # Deserialize data and update game state
-                player_data = pickle.loads(data)
-                # Update other players' positions or game world state here
+                received_data = pickle.loads(data)
+                
+                # Check if it's world state or player data
+                if isinstance(received_data, list):  # World state
+                    # Clear existing voxels
+                    for entity in scene.entities:
+                        if isinstance(entity, Voxel):
+                            destroy(entity)
+                    
+                    # Create voxels based on received data
+                    for voxel_data in received_data:
+                        Voxel(position=voxel_data['position'],
+                              texture=voxel_data['texture'],
+                              default_color=eval(f'color.{voxel_data["color"]}'))
+                else:  # Player data
+                    # Update other players' positions here
+                    pass
         except:
             break
 
@@ -78,7 +92,7 @@ def update():
     # Send player position to server
     update_positions()
 
-    # For demonstration, you may want to update other players' positions or world state here
+    # For demonstration, you may want to update other players' positions here
 
 # Start thread for receiving data
 threading.Thread(target=receive_data, daemon=True).start()
